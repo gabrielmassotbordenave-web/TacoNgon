@@ -359,7 +359,7 @@ function renderShop(){
   h+='<div class="card pad0">';
   items.forEach(it=>{const o=rn[it];const q=o.qty*buf;const r=rm[it];const price=r&&r.price?r.price:0;if(!price)someMiss=true;
     const line=price*q;total+=line;
-    h+=`<details class="pstep"><summary class="step"><div class="n"><div class="t">${esc(it)}</div><div class="d">${price?money(price)+'/'+o.unit:'prix —'}</div></div>
+    h+=`<div class="step"><div class="n"><div class="t">${esc(it)}</div><div class="d">${price?money(price)+'/'+o.unit:'prix —'}</div></div>
       <div class="r"><div class="q">${qty(q,o.unit)}</div><div class="q2">${price?money(line):'—'}</div></div></div>`;});
   h+='</div>';
   h+=`<div class="kpis"><div class="kpi" style="grid-column:span 3"><div class="v">${someMiss?'≥ '+money(total):money(total)}</div><div class="l">Coût matière estimé${someMiss?' (prix incomplets)':''}</div></div></div>`;
