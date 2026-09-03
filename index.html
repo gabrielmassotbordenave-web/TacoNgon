@@ -430,7 +430,7 @@ function renderData(){
   h+='<div class="sectlabel">Sauvegarde</div>';
   h+=`<button class="act ghost" id="expData">⬇️ Exporter (sauvegarde)</button>`;h+=`<button class="act ghost" id="impData">⬆️ Importer une sauvegarde</button>`;
   h+=`<button class="act danger" id="resetData">↺ Réinitialiser au fichier d'origine</button>`;
-  h+=`<div class="tiny" style="padding:4px 4px 0">Tes modifs (prix, recettes, réglages) sont sauvegardées automatiquement sur cet appareil.</div>`;
+  h+=`<div class="tiny" style="padding:4px 4px 0">Tes modifs (prix, recettes, réglages) sont sauvegardées automatiquement sur cet appareil.<br><b style="color:var(--jade)">build : courses-fix ✓</b> — si tu ne vois pas cette ligne, ton téléphone charge une vieille version (cache).</div>`;
   el.innerHTML=h;
 }
 
