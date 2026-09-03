@@ -145,6 +145,36 @@ nav button.on{color:var(--amber)}
   background:var(--ink);color:#fff;padding:11px 17px;border-radius:22px;font-size:13px;font-weight:600;
   opacity:0;pointer-events:none;transition:opacity .2s;z-index:50;white-space:nowrap}.toast.on{opacity:1}
 .empty{text-align:center;color:var(--ink2);padding:34px 16px;font-size:14px}
+.disthead{font-size:12px;font-weight:600;color:var(--ink2);margin:14px 2px 5px;display:flex;justify-content:space-between;align-items:center}
+.disthead .dok{color:var(--ok);font-weight:700}
+.disthead .dbad{color:var(--red);font-weight:700}
+.pcinput{position:relative}
+.pcinput input{width:100%;text-align:center;padding-right:22px}
+.pcinput i{position:absolute;right:9px;top:50%;transform:translateY(-50%);font-style:normal;font-size:11px;color:var(--ink3);font-weight:700}
+.pstep{border-bottom:1px solid var(--bdr2)}.pstep:last-child{border-bottom:none}
+.pstep>summary{list-style:none;cursor:pointer}.pstep>summary::-webkit-details-marker{display:none}
+.pstep>summary .pcaret{color:var(--jade);font-size:11px;margin-left:8px;transition:transform .15s;align-self:center;flex-shrink:0}
+.pstep[open]>summary .pcaret{transform:rotate(90deg)}
+.pstep[open]>summary{border-bottom:1px dashed var(--bdr2)}
+.pingwrap{padding:8px 14px 12px;background:#FBF7EC}
+.ping{display:flex;justify-content:space-between;gap:12px;font-size:13.5px;padding:6px 0;border-bottom:1px dashed var(--bdr2)}
+.ping:last-child{border-bottom:none}
+.ping .pq{font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pmethod{margin-top:10px;border-top:1px dashed var(--bdr2);padding-top:9px}
+.pmh{font-size:11.5px;font-weight:700;color:var(--jade);margin-bottom:5px;letter-spacing:.02em}
+.pmethod ol{margin:0;padding-left:20px}
+.pmethod li{font-size:13px;color:var(--ink);margin:5px 0;line-height:1.4}
+.crow:last-child>summary.rowline{border-bottom:none}
+.crow>summary{list-style:none;cursor:pointer}.crow>summary::-webkit-details-marker{display:none}
+.crow>summary .ccaret{color:var(--jade);font-size:11px;margin-left:8px;transition:transform .15s;align-self:center;flex-shrink:0}
+.crow[open]>summary .ccaret{transform:rotate(90deg)}
+.cbreak{padding:6px 14px 12px;background:#FBF7EC}
+.cbrow{display:flex;align-items:center;gap:10px;font-size:13.5px;padding:6px 0;border-bottom:1px dashed var(--bdr2)}
+.cbrow:last-child{border-bottom:none}
+.cbrow.cbtot{margin-top:2px;border-top:1px solid var(--bdr);border-bottom:none;padding-top:9px;font-weight:600;color:var(--ink2)}
+.cbn{flex:1;min-width:0}
+.cbp{width:42px;text-align:right;color:var(--ink3);font-size:12px;font-variant-numeric:tabular-nums}
+.cbc{width:72px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
 </style>
 </head><body>
 <header>
@@ -173,6 +203,8 @@ const TITLES={cost:'Coûts & marges',prep:'Fiche de préparation',shop:'Liste de
 const PILL={Chicken:'pill-chicken',Fish:'pill-fish',Pork:'pill-pork'};
 const PROT_FR={Chicken:'Poulet',Fish:'Poisson',Pork:'Porc'};
 const SUSPECT=['Poulet Pané'];
+const FREE=['Eau'];
+const BATCH_DEFAULT=['Poulet Pané','Poisson Pané','Tortillas'];
 const SAUCES=['Tamarin','Wasabi','Gingembre'];
 const PROTS=['Chicken','Fish','Pork'];
 
@@ -182,13 +214,25 @@ function migrate(s){
   if(!s.settings)s.settings={target_fc:30,buffer:1.10};
   if(!s.event)s.event={};
   if(!s.dist)s.dist={total:'',prot:{Chicken:34,Fish:33,Pork:33},sauce:{Tamarin:34,Wasabi:33,Gingembre:33}};
+  ensureScaling(s);
   return s;
 }
 function fresh(){const d=JSON.parse(JSON.stringify(SEED));
   d.settings={target_fc:30,buffer:1.10};d.event={};
   d.dist={total:'',prot:{Chicken:34,Fish:33,Pork:33},sauce:{Tamarin:34,Wasabi:33,Gingembre:33}};
+  ensureScaling(d);
   return d;}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function ensureScaling(d){if(!d||!d.subs)return;var FRAC={'Tortillas':0.55,'Chou émincé':0.15,'Chou rouge émincé':0.15,'Coriandre lavée':0.1,'Pickles':0.3,'Sauce Tamarin':0.8,'Sauce Wasabi':0.85,'Sauce Gingembre':0.8,'Poulet Pané':0.3,'Poisson Pané':0.3,'Pork Belly Cuit':0.92,'Mot Hoi An':0.85};d.subs.forEach(function(s){if(s.t_fixe==null||s.t_var==null){var pm=+s.prep_min||0;var f=FRAC[s.output_item]!=null?FRAC[s.output_item]:0.4;var tf=Math.round(pm*f);if(s.t_fixe==null)s.t_fixe=tf;if(s.t_var==null)s.t_var=Math.max(0,pm-tf);}});}
+function prepIng(l){var scale=l.scale;var o='<div class="pingwrap">';l.s.ingredients.forEach(function(i){o+='<div class="ping"><span>'+esc(i.item)+'</span><span class="pq">'+qty(i.qty*scale,i.unit)+'</span></div>';});if(!l.s.ingredients.length)o+='<div class="tiny">Aucun ingrédient renseigné.</div>';var _in=(l.s.instructions||'').trim();if(_in){var _st=_in.split(/\.\s+/).map(function(x){return x.trim();}).filter(Boolean);o+='<div class="pmethod"><div class="pmh">Méthode</div><ol>';_st.forEach(function(st){o+='<li>'+esc(st.replace(/\.$/,''))+'</li>';});o+='</ol></div>';}return o+'</div>';}
+function costBreak(r){var t=r.t;var total=r.cost;var rows=[];
+  t.ingredients.forEach(function(i){var s=subByOut(i.item);if(!s)return;var u=subUnitCost(s);rows.push({name:i.item,cost:i.qty*u.cost,miss:u.miss});});
+  rows.sort(function(a,b){return b.cost-a.cost;});
+  var o='<div class="cbreak">';
+  rows.forEach(function(x){var p=(total>0)?Math.round(x.cost/total*100):0;
+    o+='<div class="cbrow"><span class="cbn">'+esc(x.name)+(x.miss?' <span class="tiny" style="color:var(--red)">prix ?</span>':'')+'</span><span class="cbp">'+(total>0?p+' %':'')+'</span><span class="cbc">'+money(x.cost)+'</span></div>';});
+  o+='<div class="cbrow cbtot"><span class="cbn">Prix de vente</span><span class="cbp"></span><span class="cbc">'+money(t.price)+'</span></div>';
+  return o+'</div>';}
 
 function esc(s){return(''+s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function rawMap(){const m={};state.raw.forEach(r=>m[r.item]=r);return m;}
@@ -201,7 +245,7 @@ function qty(v,u){
   return(Math.round(v*100)/100).toString().replace('.',',')+'\u00A0'+u;
 }
 function subUnitCost(s){const rm=rawMap();let c=0,miss=false;
-  s.ingredients.forEach(i=>{const r=rm[i.item];const p=r&&r.price?r.price:0;if(!p)miss=true;c+=i.qty*p;});
+  s.ingredients.forEach(i=>{if(FREE.includes(i.item))return;const r=rm[i.item];const p=r&&r.price?r.price:0;if(!p)miss=true;c+=i.qty*p;});
   return{cost:s.output_qty?c/s.output_qty:0,miss};}
 function tacoCost(t){let c=0,miss=false;
   t.ingredients.forEach(i=>{const s=subByOut(i.item);if(!s)return;const u=subUnitCost(s);if(u.miss)miss=true;c+=i.qty*u.cost;});
@@ -210,7 +254,7 @@ function outputNeeds(){const need={};
   state.tacos.forEach(t=>{const n=+state.event[t.id]||0;if(!n)return;
     t.ingredients.forEach(i=>{need[i.item]=(need[i.item]||0)+n*i.qty;});});return need;}
 function totalTacos(){return state.tacos.reduce((a,t)=>a+(+state.event[t.id]||0),0);}
-function missingCount(){return state.raw.filter(r=>r.active&&!r.price).length;}
+function missingCount(){return state.raw.filter(r=>r.active&&!r.price&&!FREE.includes(r.item)).length;}
 function anyPriceMissing(){return missingCount()>0;}
 
 function recomputeActive(){
@@ -239,11 +283,11 @@ function renderCost(){
   rows.forEach(r=>{const t=r.t;const fc=t.price?r.cost/t.price*100:null;const marge=t.price?t.price-r.cost:null;
     let fcChip='';if(!r.miss&&fc!=null){const cls=fc<=target?'fc-ok':(fc<=target+8?'fc-warn':'fc-bad');fcChip=`<span class="chip ${cls}">${pct(fc)}</span>`;}
     const susp=t.ingredients.some(i=>SUSPECT.includes(i.item));
-    h+=`<div class="rowline"><div class="grow">
+    h+=`<details class="crow"><summary class="rowline"><div class="grow">
       <div class="taco-name">${esc(t.name)}${susp?' ⚠️':''}</div>
       <div class="taco-meta"><span class="chip ${PILL[t.protein]||''}">${PROT_FR[t.protein]||t.protein}</span><span class="saucetag">${esc(t.sauce)}</span></div>
     </div><div class="costblock">${r.miss?'<div class="c muted">—</div><div class="m tiny">prix manquant</div>'
-      :`<div class="c">${money(r.cost)}</div><div class="m">${fcChip} <span class="tiny">marge ${money(marge)}</span></div>`}</div></div>`;});
+      :`<div class="c">${money(r.cost)}</div><div class="m">${fcChip} <span class="tiny">marge ${money(marge)}</span></div>`}</div><span class="pcaret ccaret">▸</span></summary>${costBreak(r)}</details>`;});
   h+='</div>';
   if(complete.some(r=>r.t.ingredients.some(i=>SUSPECT.includes(i.item))))
     h+=`<div class="banner info"><span>ℹ️</span><div>Rendement du <b>Poulet Pané</b> = valeur du fichier, mais elle contredit le ~32 % de perte mesuré. Coût poulet provisoire tant que le batch test n'est pas fait.</div></div>`;
@@ -266,16 +310,18 @@ function applyDist(){
 function renderPrep(){
   const el=document.getElementById('p-prep');const need=outputNeeds();const tot=totalTacos();
   const lines=state.subs.filter(s=>s.active&&need[s.output_item]).map(s=>{const n=need[s.output_item];
-    const b=s.output_qty?Math.ceil(n/s.output_qty):0;return{s,n,b,t:b*s.prep_min};});
-  const totMin=lines.reduce((a,l)=>a+l.t,0),totBatch=lines.reduce((a,l)=>a+l.b,0);
+    const scale=s.output_qty?n/s.output_qty:0;
+    const t=Math.round((+s.t_fixe||0)+(+s.t_var||0)*scale);
+    return{s,n,scale,t};});
+  const totMin=lines.reduce((a,l)=>a+l.t,0);
   const pS=distSum(state.dist.prot),sS=sauceSum();
   let h='';
   h+='<div class="sectlabel">Répartition auto</div><div class="card">';
   h+=`<div class="frow"><label>Total tacos</label><input class="num-r" type="number" min="0" step="1" inputmode="numeric" data-dist="total" value="${state.dist.total||''}" placeholder="0"></div>`;
-  h+='<div class="tiny" style="margin:10px 0 2px;font-weight:600">Répartition protéines'+(pS!=100?` <span style="color:var(--piment)">(total ${pS}% ≠ 100)</span>`:'')+'</div>';
-  h+='<div class="pctrow">'+PROTS.map(p=>`<div class="pcol"><div class="lab">${PROT_FR[p]}</div><input type="number" min="0" step="1" inputmode="numeric" data-distp="${p}" value="${state.dist.prot[p]}"></div>`).join('')+'</div>';
-  h+='<div class="tiny" style="margin:10px 0 2px;font-weight:600">Répartition sauces'+(sS!=100?` <span style="color:var(--piment)">(total ${sS}% ≠ 100)</span>`:'')+'</div>';
-  h+='<div class="pctrow">'+SAUCES.map(s=>`<div class="pcol"><div class="lab">${s}</div><input type="number" min="0" step="1" inputmode="numeric" data-dists="${s}" value="${state.dist.sauce[s]}"></div>`).join('')+'</div>';
+  h+='<div class="disthead"><span>Répartition protéines</span><span class="'+(pS==100?'dok':'dbad')+'">'+pS+' %</span></div>';
+  h+='<div class="pctrow">'+PROTS.map(p=>`<div class="pcol"><div class="lab">${PROT_FR[p]}</div><div class="pcinput"><input type="number" min="0" step="1" inputmode="numeric" data-distp="${p}" value="${state.dist.prot[p]}"><i>%</i></div></div>`).join('')+'</div>';
+  h+='<div class="disthead"><span>Répartition sauces</span><span class="'+(sS==100?'dok':'dbad')+'">'+sS+' %</span></div>';
+  h+='<div class="pctrow">'+SAUCES.map(s=>`<div class="pcol"><div class="lab">${s}</div><div class="pcinput"><input type="number" min="0" step="1" inputmode="numeric" data-dists="${s}" value="${state.dist.sauce[s]}"><i>%</i></div></div>`).join('')+'</div>';
   h+=`<button class="act solid" id="applyDist" style="margin-top:12px;margin-bottom:0">Répartir sur les tacos</button>`;
   h+='</div>';
 
@@ -287,14 +333,14 @@ function renderPrep(){
 
   h+=`<div class="kpis" style="margin-top:6px">
     <div class="kpi"><div class="v">${tot}</div><div class="l">Tacos</div></div>
-    <div class="kpi"><div class="v">${totBatch}</div><div class="l">Batches</div></div>
+    <div class="kpi"><div class="v">${lines.length}</div><div class="l">Sous-rec.</div></div>
     <div class="kpi"><div class="v">${Math.round(totMin/60*10)/10}h</div><div class="l">Prep totale</div></div></div>`;
   h+='<div class="sectlabel">À préparer</div>';
   if(!tot)h+='<div class="empty">Répartis un total ou saisis des quantités pour générer la fiche.</div>';
   else{h+='<div class="card pad0">';lines.forEach(l=>{const susp=SUSPECT.includes(l.s.output_item);
-    h+=`<div class="step"><div class="n"><div class="t">${esc(l.s.name)}${susp?' ⚠️':''}</div>
-      <div class="d">${l.b} batch${l.b>1?'es':''} × ${l.s.prep_min} min · ${qty(l.s.output_qty,l.s.output_unit)}/batch</div></div>
-      <div class="r"><div class="q">${qty(l.n,l.s.output_unit)}</div><div class="q2">${l.t} min</div></div></div>`;});
+    h+=`<details class="pstep"><summary class="step"><div class="n"><div class="t">${esc(l.s.name)}${susp?' ⚠️':''}</div>
+      <div class="d">${"à l'échelle ×"+(Math.round(l.scale*10)/10).toString().replace(".",",")}</div></div>
+      <div class="r"><div class="q">${qty(l.n,l.s.output_unit)}</div><div class="q2">${l.t} min</div></div><span class="pcaret">▸</span></summary>${prepIng(l)}</details>`;});
     h+='</div><button class="act ghost" id="copyPrep">📋 Copier la fiche</button>';}
   el.innerHTML=h;
 }
@@ -313,7 +359,7 @@ function renderShop(){
   h+='<div class="card pad0">';
   items.forEach(it=>{const o=rn[it];const q=o.qty*buf;const r=rm[it];const price=r&&r.price?r.price:0;if(!price)someMiss=true;
     const line=price*q;total+=line;
-    h+=`<div class="step"><div class="n"><div class="t">${esc(it)}</div><div class="d">${price?money(price)+'/'+o.unit:'prix —'}</div></div>
+    h+=`<details class="pstep"><summary class="step"><div class="n"><div class="t">${esc(it)}</div><div class="d">${price?money(price)+'/'+o.unit:'prix —'}</div></div>
       <div class="r"><div class="q">${qty(q,o.unit)}</div><div class="q2">${price?money(line):'—'}</div></div></div>`;});
   h+='</div>';
   h+=`<div class="kpis"><div class="kpi" style="grid-column:span 3"><div class="v">${someMiss?'≥ '+money(total):money(total)}</div><div class="l">Coût matière estimé${someMiss?' (prix incomplets)':''}</div></div></div>`;
@@ -352,7 +398,8 @@ function renderRecipes(){
     h+=`<div class="frow"><label>Nom</label><input type="text" data-sf="${s.id}" data-k="name" value="${esc(s.name)}"></div>`;
     h+=`<div class="frow"><label>Produit</label><input type="text" data-sfc="${s.id}" data-k="output_item" value="${esc(s.output_item)}"></div>`;
     h+=`<div class="frow"><label>Rendement</label><input class="num-r" type="number" step="0.01" inputmode="decimal" data-sf="${s.id}" data-k="output_qty" value="${s.output_qty}"><select data-sfc="${s.id}" data-k="output_unit">`+['kg','L','unité'].map(u=>`<option ${s.output_unit===u?'selected':''}>${u}</option>`).join('')+`</select></div>`;
-    h+=`<div class="frow"><label>Temps</label><input class="num-r" type="number" step="1" inputmode="numeric" data-sf="${s.id}" data-k="prep_min" value="${s.prep_min}"><span class="tiny">min/batch</span></div>`;
+    h+=`<div class="frow"><label>Temps fixe</label><input class="num-r" type="number" step="1" inputmode="numeric" data-sf="${s.id}" data-k="t_fixe" value="${s.t_fixe||0}"><span class="tiny">min · une fois (pétrissage, repos, chauffe…)</span></div>`;
+    h+=`<div class="frow"><label>Temps / lot</label><input class="num-r" type="number" step="1" inputmode="numeric" data-sf="${s.id}" data-k="t_var" value="${s.t_var||0}"><span class="tiny">min · par ${qty(s.output_qty,s.output_unit)}, monte avec la quantité</span></div>`;
     h+='<div class="subhead">Ingrédients bruts</div>';
     s.ingredients.forEach((ing,idx)=>{
       h+=`<div class="ing"><input class="iname" list="rawlist" data-sii="${s.id}" data-idx="${idx}" value="${esc(ing.item)}" placeholder="ingrédient">
@@ -377,8 +424,8 @@ function renderData(){
   h+='<div class="sectlabel">Prix des ingrédients bruts</div>';
   if(anyPriceMissing())h+=`<div class="banner warn"><span>⚠️</span><div>${missingCount()} prix à entrer. Sans eux, coût et courses restent incomplets — c'est le vrai blocage à débloquer.</div></div>`;
   h+='<div class="card pad0">';
-  state.raw.filter(r=>r.active).sort((a,b)=>a.item.localeCompare(b.item,'fr')).forEach(r=>{
-    h+=`<label class="fld"><span class="name">${esc(r.item)}</span><input type="number" min="0" step="0.01" inputmode="decimal" class="${r.price?'':'empty'}" data-price="${esc(r.item)}" value="${r.price||''}" placeholder="0,00"><span class="u">$/${r.unit}</span></label>`;});
+  state.raw.filter(r=>r.active).sort((a,b)=>a.item.localeCompare(b.item,'fr')).forEach(r=>{const fr=FREE.includes(r.item);
+    h+=`<label class="fld"><span class="name">${esc(r.item)}${fr?' <span class="tiny">≈ gratuit</span>':''}</span><input type="number" min="0" step="0.01" inputmode="decimal" class="${(r.price||fr)?'':'empty'}" data-price="${esc(r.item)}" value="${r.price||''}" placeholder="0,00"><span class="u">$/${r.unit}</span></label>`;});
   h+='</div>';
   h+='<div class="sectlabel">Sauvegarde</div>';
   h+=`<button class="act ghost" id="expData">⬇️ Exporter (sauvegarde)</button>`;h+=`<button class="act ghost" id="impData">⬆️ Importer une sauvegarde</button>`;
@@ -404,8 +451,8 @@ function exportJSON(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='taco-ngon-data.json';a.click();toast('Exporté');}
 function importJSON(){var inp=document.createElement('input');inp.type='file';inp.accept='application/json,.json';inp.onchange=function(){var f=inp.files[0];if(!f)return;var r=new FileReader();r.onload=function(){try{var dd=JSON.parse(r.result);if(!dd||!Array.isArray(dd.tacos)||!Array.isArray(dd.subs)||!Array.isArray(dd.raw))throw 0;if(!confirm('Remplacer toutes les données actuelles par ce fichier ?'))return;state=migrate(dd);recomputeActive();save();go(cur);toast('Importé');}catch(e){alert('Fichier invalide — ce n\'est pas une sauvegarde Taco Ngon.');}};r.readAsText(f);};inp.click();}
 function copyPrep(){const need=outputNeeds();let txt='FICHE PREP — '+totalTacos()+' tacos\n\n';
-  state.subs.filter(s=>s.active&&need[s.output_item]).forEach(s=>{const n=need[s.output_item];const b=Math.ceil(n/s.output_qty);
-    txt+='• '+s.name+': '+qty(n,s.output_unit)+' — '+b+' batch(es), '+(b*s.prep_min)+' min\n';});copy(txt,'Fiche copiée');}
+  state.subs.filter(s=>s.active&&need[s.output_item]).forEach(s=>{const n=need[s.output_item];const scale=s.output_qty?n/s.output_qty:0;var tm=Math.round((+s.t_fixe||0)+(+s.t_var||0)*scale);var lab='×'+(Math.round(scale*10)/10);
+    txt+='• '+s.name+': '+qty(n,s.output_unit)+' — '+lab+', '+tm+' min\n';});copy(txt,'Fiche copiée');}
 function copyShop(){const need=outputNeeds();const buf=state.settings.buffer;const rn={};
   state.subs.filter(s=>s.active).forEach(s=>{const n=need[s.output_item]||0;if(!n)return;const sc=n/s.output_qty;
     s.ingredients.forEach(i=>{if(!i.item)return;if(!rn[i.item])rn[i.item]={q:0,u:i.unit};rn[i.item].q+=i.qty*sc;});});
@@ -422,7 +469,7 @@ document.addEventListener('input',e=>{const d=e.target.dataset;const v=e.target.
   else if(d.price!==undefined){const r=state.raw.find(x=>x.item===d.price);if(r){r.price=+v||0;e.target.classList.toggle('empty',!r.price);save();}}
   else if(d.tf!==undefined){const t=state.tacos.find(x=>x.id==d.tf);if(t){t[d.k]=(d.k==='price')?(+v||0):v;save();}}
   else if(d.tiq!==undefined){const t=state.tacos.find(x=>x.id==d.tiq);if(t&&t.ingredients[d.idx]){t.ingredients[d.idx].qty=+v||0;save();}}
-  else if(d.sf!==undefined){const s=state.subs.find(x=>x.id==d.sf);if(s){s[d.k]=(d.k==='output_qty'||d.k==='prep_min')?(+v||0):v;save();}}
+  else if(d.sf!==undefined){const s=state.subs.find(x=>x.id==d.sf);if(s){s[d.k]=(d.k==='output_qty'||d.k==='prep_min'||d.k==='t_fixe'||d.k==='t_var')?(+v||0):v;save();}}
   else if(d.siq!==undefined){const s=state.subs.find(x=>x.id==d.siq);if(s&&s.ingredients[d.idx]){s.ingredients[d.idx].qty=+v||0;save();}}
 });
 
